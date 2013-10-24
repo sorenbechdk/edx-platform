@@ -34,9 +34,6 @@ function () {
 
         Player.prototype.seekTo = function (value) {
             if ((typeof value === 'number') && (value <= this.video.duration) && (value >= 0)) {
-                this.start = 0;
-                this.end = this.video.duration;
-
                 this.video.currentTime = value;
             }
         };
@@ -190,10 +187,6 @@ function () {
                 return;
             }
 
-            // Determine the starting and ending time for the video.
-            this.start = config.playerVars.start;
-            this.end = config.playerVars.end;
-
             // Create HTML markup for the <video> element, populating it with sources from previous step.
             // Because of problems with creating video element via jquery
             // (http://bugs.jquery.com/ticket/9174) we create it using native JS.
@@ -238,14 +231,6 @@ function () {
                 }
 
                 _this.playerState = HTML5Video.PlayerState.PAUSED;
-
-                if (_this.start > _this.video.duration) {
-                    _this.start = 0;
-                }
-                if ((_this.end === null) || (_this.end > _this.video.duration)) {
-                    _this.end = _this.video.duration;
-                }
-                _this.video.currentTime = _this.start;
 
                 if ($.isFunction(_this.config.events.onReady)) {
                     _this.config.events.onReady(null);
