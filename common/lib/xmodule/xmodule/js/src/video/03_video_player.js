@@ -281,6 +281,8 @@ function (HTML5Video, Resizer) {
             }
         );
 
+        console.log('updating this.videoPlayer.endTime; duration = ' + duration);
+
         this.videoPlayer.startTime = 0;
         this.videoPlayer.endTime = duration;
 
@@ -504,6 +506,8 @@ function (HTML5Video, Resizer) {
                 this.videoPlayer.endTime === null ||
                 this.videoPlayer.endTime > duration
             ) {
+                console.log('updating this.videoPlayer.endTime; duration = ' + duration);
+
                 this.videoPlayer.endTime = duration;
             }
             this.videoPlayer.player.seekTo(this.videoPlayer.startTime, true);

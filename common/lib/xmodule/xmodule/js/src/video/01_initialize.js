@@ -385,7 +385,11 @@ function (VideoPlayer) {
         }
 
         this.config.endTime = parseInt(this.config.endTime, 10);
-        if ((!isFinite(this.config.endTime)) || (this.config.endTime < this.config.startTime)) {
+        if (
+            !isFinite(this.config.endTime) ||
+            this.config.endTime < this.config.startTime ||
+            this.config.endTime === 0
+        ) {
             this.config.endTime = null;
         }
     }
