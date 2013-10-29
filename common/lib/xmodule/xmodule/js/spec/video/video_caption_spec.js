@@ -23,8 +23,9 @@
             YT.Player = undefined;
             $('.subtitles').remove();
 
-            // FIGURE OUT: What is `source` CSS selector? Why are we removing
-            // it?
+            // `source` tags should be removed to avoid memory leak bug that we
+            // had before. Removing of `source` tag, not `video` tag, stops
+            // loading video source and clears the memory.
             $('source').remove();
 
             window.onTouchBasedDevice = oldOTBD;
@@ -645,6 +646,8 @@
                 beforeEach(function () {
                     state.el.addClass('closed');
                     videoCaption.toggle(jQuery.Event('click'));
+
+                    jasmine.Clock.useMock();
                 });
 
                 it('log the show_transcript event', function () {
@@ -661,8 +664,14 @@
                 });
 
                 it('scroll the caption', function () {
-                    waits(1000);
+                    // After transcripts are shown, and the video plays for a
+                    // bit.
+                    jasmine.Clock.tick(1000);
 
+                    // The transcripts should have advanced by at least one
+                    // position. When they advance, the list scrolls. The
+                    // current transcript position should be constantly
+                    // visible.
                     runs(function () {
                         expect($.fn.scrollTo).toHaveBeenCalled();
                     });
