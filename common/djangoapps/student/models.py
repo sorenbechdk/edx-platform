@@ -828,7 +828,6 @@ class CourseEnrollment(models.Model):
             record = CourseEnrollment.objects.get(user=user, course_id=course_id)
             record.is_active = False
             record.save()
-            from nose.tools import set_trace; set_trace()
             unenroll_done.send(sender=cls, course_enrollment=record)
         except cls.DoesNotExist:
             err_msg = u"Tried to unenroll student {} from {} but they were not enrolled"
