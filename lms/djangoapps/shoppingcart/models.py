@@ -25,7 +25,7 @@ from xmodule.modulestore.exceptions import ItemNotFoundError
 from course_modes.models import CourseMode
 from mitxmako.shortcuts import render_to_string
 from student.views import course_from_id
-from student.models import CourseEnrollment
+from student.models import CourseEnrollment, unenroll_done
 
 from verify_student.models import SoftwareSecurePhotoVerification
 
@@ -403,19 +403,18 @@ class CertificateItem(OrderItem):
 
     # TODO remove after signals refactoring
     @classmethod
-    @receiver(pre_save, sender=CourseEnrollment)
+    @receiver(unenroll_done, sender=CourseEnrollment)
     def refund_cert_callback(sender, **kwargs):
         """
         When a CourseEnrollment object whose mode is 'verified' has its is_active field set to false (i.e. when a student
         is unenrolled), this callback ensures that the associated CertificateItem is marked as refunded, and that an
         appropriate email is sent to billing.
         """
-        from nose.tools import set_trace; set_trace()
         try:
-            mode = kwargs['instance'].mode
-            is_active = kwargs['instance'].is_active
-            course_id = kwargs['instance'].course_id
-            user = kwargs['instance'].user
+            mode = kwargs['course_enrollment'].mode
+            is_active = kwargs['course_enrollment'].is_active
+            course_id = kwargs['course_enrollment'].course_id
+            user = kwargs['course_enrollment'].user
 
             # If a verified course is having is_active set to False, i.e. if a verified user is unenrolling....
             if (mode == 'verified') and (is_active == False):
