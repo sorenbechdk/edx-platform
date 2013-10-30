@@ -99,9 +99,6 @@ function (HTML5Video, Resizer) {
             state.videoPlayer.playerVars.html5 = 1;
         }
 
-        state.videoPlayer.startTime = state.config.startTime;
-        state.videoPlayer.endTime = state.config.endTime;
-
         // There is a bug which prevents YouTube API to correctly set the speed
         // to 1.0 from another speed in Firefox when in HTML5 mode. There is a
         // fix which basically reloads the video at speed 1.0 when this change
@@ -508,8 +505,6 @@ function (HTML5Video, Resizer) {
                 this.videoPlayer.initialSeekToStartTime
             )
         ) {
-
-
             if (
                 this.videoPlayer.seekToStartTimeOldDuration !== duration &&
                 this.videoPlayer.initialSeekToStartTime === false
@@ -542,21 +537,21 @@ function (HTML5Video, Resizer) {
                 '2.00': 2.0
             };
 
-            // Change the start/end times based on the speed of the video.
-            this.videoPlayer.startTime /= speedFactor[this.speed];
-            this.videoPlayer.endTime /= speedFactor[this.speed];
-
             if (this.videoPlayer.startTime > duration) {
                 this.videoPlayer.startTime = 0;
+            } else {
+                this.videoPlayer.startTime /= speedFactor[this.speed];
             }
             if (
                 this.videoPlayer.endTime === null ||
                 this.videoPlayer.endTime > duration
             ) {
                 this.videoPlayer.endTime = duration;
+            } else {
+                this.videoPlayer.endTime /= speedFactor[this.speed];
             }
 
-            if (durationChange === false) {
+            if (durationChange === false && this.videoPlayer.startTime > 0) {
                 if (this.videoType === 'html5') {
                     this.videoPlayer.player.seekTo(this.videoPlayer.startTime);
                 } else {
@@ -567,12 +562,14 @@ function (HTML5Video, Resizer) {
                 }
             }
 
-            this.trigger(
-                'videoProgressSlider.updateStartEndTimeRegion',
-                {
-                    duration: duration
-                }
-            );
+            if (!(this.videoPlayer.startTime === 0 && this.videoPlayer.endTime === duration)) {
+                this.trigger(
+                    'videoProgressSlider.updateStartEndTimeRegion',
+                    {
+                        duration: duration
+                    }
+                );
+            }
         }
 
         this.trigger(

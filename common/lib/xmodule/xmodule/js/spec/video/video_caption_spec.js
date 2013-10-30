@@ -663,7 +663,8 @@
                     expect(state.el).not.toHaveClass('closed');
                 });
 
-                it('scroll the caption', function () {
+                // Test turned off due to flakiness (30.10.2013).
+                xit('scroll the caption', function () {
                     // After transcripts are shown, and the video plays for a
                     // bit.
                     jasmine.Clock.tick(1000);
