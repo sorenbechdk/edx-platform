@@ -8,8 +8,7 @@ from collections import namedtuple
 from boto.exception import BotoServerError  # this is a super-class of SESError and catches connection errors
 
 from django.dispatch import receiver
-from student.models import verified_unenroll_done
-
+from django.db.models.signals import pre_save
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -402,14 +401,16 @@ class CertificateItem(OrderItem):
     course_enrollment = models.ForeignKey(CourseEnrollment)
     mode = models.SlugField()
 
+    # TODO remove after signals refactoring
     @classmethod
-    @receiver(verified_unenroll_done)
+    @receiver(pre_save, sender=CourseEnrollment)
     def refund_cert_callback(sender, **kwargs):
         """
         When a CourseEnrollment object whose mode is 'verified' has its is_active field set to false (i.e. when a student
         is unenrolled), this callback ensures that the associated CertificateItem is marked as refunded, and that an
         appropriate email is sent to billing.
         """
+        from nose.tools import set_trace; set_trace()
         try:
             course_id = kwargs['course_id']
             user = kwargs['user']
@@ -427,7 +428,10 @@ class CertificateItem(OrderItem):
             message = "User " + str(user) + "(" + str(user.email) + ") has requested a refund on Order #" + str(order_number) + "."
             to_email = [settings.PAYMENT_SUPPORT_EMAIL]
             from_email = [settings.PAYMENT_SUPPORT_EMAIL]
-            send_mail(subject, message, from_email, to_email, fail_silently=False)
+            try:
+                send_mail(subject, message, from_email, to_email, fail_silently=False)
+            except (smtplib.SMTPException, BotoServerError):
+                log.error('Failed sending email to billing request a refund for verified certiciate (User %s, Course %s)', user, course_id)
 
             return target_cert
 

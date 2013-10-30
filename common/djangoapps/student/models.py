@@ -30,8 +30,6 @@ from pytz import UTC
 
 import django.dispatch
 
-verified_unenroll_done = django.dispatch.Signal(providing_args=["user", "user_email", "course_id"])
-
 log = logging.getLogger(__name__)
 AUDIT_LOG = logging.getLogger("audit")
 

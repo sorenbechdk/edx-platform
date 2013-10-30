@@ -44,7 +44,6 @@ from student.models import (
     TestCenterRegistration, TestCenterRegistrationForm, PendingNameChange,
     PendingEmailChange, CourseEnrollment, unique_id_for_user,
     get_testcenter_registration, CourseEnrollmentAllowed, UserStanding,
-    verified_unenroll_done
 )
 from student.forms import PasswordResetFormNoActive
 
@@ -468,13 +467,6 @@ def change_enrollment(request):
         try:
             course = course_from_id(course_id)
             enrollment_mode = CourseEnrollment.enrollment_mode_for_user(user, course_id)
-
-            # did they sign up for verified certs?
-            if(enrollment_mode == 'verified'):
-                # If the user is allowed a refund, do so
-                if has_access(user, course, 'refund'):
-                    # triggers the callback to mark the certificate as refunded
-                    verified_unenroll_done.send(sender=request, user=user, user_email=user.email, course_id=course_id)
             CourseEnrollment.unenroll(user, course_id)
             org, course_num, run = course_id.split("/")
             dog_stats_api.increment(
