@@ -426,7 +426,7 @@ class CertificateItem(OrderItem):
             subject = _("[Refund] User-Requested Refund")
             message = "User " + str(user) + "(" + str(user.email) + ") has requested a refund on Order #" + str(order_number) + "."
             to_email = [settings.PAYMENT_SUPPORT_EMAIL]
-            from_email = "support@edx.org"
+            from_email = [settings.PAYMENT_SUPPORT_EMAIL]
             send_mail(subject, message, from_email, to_email, fail_silently=False)
 
             return target_cert
