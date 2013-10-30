@@ -23,7 +23,9 @@ function () {
             }
 
             if (!config.element) {
-                console.log('[Video info]: Required parameter `element` is not passed.');
+                console.log(
+                    '[Video info]: Required parameter `element` is not passed.'
+                );
             }
 
             return this;

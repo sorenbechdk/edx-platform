@@ -63,9 +63,9 @@ function (HTML5Video, Resizer) {
         var youTubeId;
 
         // The function is called just once to apply pre-defined configurations
-        // by student before video starts playing. Waits until the video's metadata
-        // is loaded, which normally happens just after the video starts playing.
-        // Just after that configurations can be applied.
+        // by student before video starts playing. Waits until the video's
+        // metadata is loaded, which normally happens just after the video
+        // starts playing. Just after that configurations can be applied.
         state.videoPlayer.ready = _.once(function () {
             state.videoPlayer.onSpeedChange(state.speed);
         });

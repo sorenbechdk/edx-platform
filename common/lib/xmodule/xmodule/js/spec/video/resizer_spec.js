@@ -12,7 +12,7 @@ function (Resizer) {
                     '</div>',
                 '</div>'
             ].join(''),
-            config, container, element;
+            config, container, element, originalConsoleLog;
 
         beforeEach(function () {
             setFixtures(html);
@@ -23,12 +23,17 @@ function (Resizer) {
                 container: container,
                 element: element
             };
+
+            originalConsoleLog = window.console.log;
+            spyOn(console, 'log');
+        });
+
+        afterEach(function () {
+            window.console.log = originalConsoleLog;
         });
 
         it('When Initialize without required parameters, log message is shown',
             function () {
-                spyOn(console, 'log');
-
                 new Resizer({ });
                 expect(console.log).toHaveBeenCalled();
             }

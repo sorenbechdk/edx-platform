@@ -380,7 +380,7 @@ function (VideoPlayer) {
      */
     function checkStartEndTimes() {
         this.config.startTime = parseInt(this.config.startTime, 10);
-        if ((!isFinite(this.config.startTime)) || (this.config.startTime < 0)) {
+        if (!isFinite(this.config.startTime) || this.config.startTime < 0) {
             this.config.startTime = 0;
         }
 
