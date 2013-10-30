@@ -466,21 +466,23 @@ def change_enrollment(request):
     elif action == "unenroll":
         try:
             course = course_from_id(course_id)
-            enrollment_mode = CourseEnrollment.enrollment_mode_for_user(user, course_id)
-            CourseEnrollment.unenroll(user, course_id)
-            org, course_num, run = course_id.split("/")
-            dog_stats_api.increment(
-                "common.student.unenrollment",
-                tags=["org:{0}".format(org),
-                      "course:{0}".format(course_num),
-                      "run:{0}".format(run)]
-            )
-            return HttpResponse()
-        except CourseEnrollment.DoesNotExist:
-            return HttpResponseBadRequest(_("You are not enrolled in this course"))
         except ItemNotFoundError:
             log.warning("User {0} tried to unenroll from non-existent course {1}".format(user.username, course_id))
             return HttpResponseBadRequest(_("Course id is invalid"))
+        try:
+            enrollment_mode = CourseEnrollment.enrollment_mode_for_user(user, course_id)
+        except CourseEnrollment.DoesNotExist:
+            return HttpResponseBadRequest(_("You are not enrolled in this course"))
+        CourseEnrollment.unenroll(user, course_id)
+        org, course_num, run = course_id.split("/")
+        dog_stats_api.increment(
+            "common.student.unenrollment",
+            tags=["org:{0}".format(org),
+                  "course:{0}".format(course_num),
+                  "run:{0}".format(run)]
+        )
+        return HttpResponse()
+        
     else:
         return HttpResponseBadRequest(_("Enrollment action is invalid"))
 

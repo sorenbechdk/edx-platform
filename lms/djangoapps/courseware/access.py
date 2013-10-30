@@ -209,15 +209,8 @@ def _has_access_course_desc(user, course, action):
         or not that deadline has passed; checking whether the student actually *purchased*
         a paid/verified certificate must be done elsewhere.
         """
-        now = datetime.now(UTC())
-        course_start = course.enrollment_start
-        # If there *is* no start date, user can be refunded
-        if course_start is None:
-            return True
-        # Presently, refunds are only allowed up to two weeks after the course
-        # start date.
-        grace_period = timedelta(days=14)
-        refund_end = course_start + grace_period
+        expiration_date = CourseMode.mode_for_course(course_id, 'verified').expiration_date
+        now = datetime.now(UTC()).date()
         if (now.date() <= refund_end.date()):
             return True
         return False

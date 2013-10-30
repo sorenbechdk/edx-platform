@@ -412,41 +412,42 @@ class CertificateItem(OrderItem):
         appropriate email is sent to billing.
         """
         try:
-            from nose.tools import set_trace; set_trace()
             mode = kwargs['course_enrollment'].mode
             is_active = kwargs['course_enrollment'].is_active
             course_id = kwargs['course_enrollment'].course_id
             user = kwargs['course_enrollment'].user
+        except:
+            # what's the exception for poorly-formatted kwargs?
 
-            # If a verified course is having is_active set to False, i.e. if a verified user is unenrolling....
-            if (mode == 'verified') and (is_active == False):
-                expiration_date = CourseMode.mode_for_course(course_id, 'verified').expiration_date
-                # TODO if within bounds of the expiration date...
-                now = datetime.now(UTC()).date()
-                if (now <= expiration_date):
-                    # If there's duplicate entries, just grab the first one and refund it (though in most cases we should only get one)
-                    target_certs = CertificateItem.objects.filter(course_id=course_id, user_id=user, status='purchased', mode='verified')
+        # Only refund verified cert unenrollments that are within bounds of the expiration date
+        if (mode == 'verified'):
+            expiration_date = CourseMode.mode_for_course(course_id, 'verified').expiration_date
+            now = datetime.now(UTC()).date()
+
+            if (now <= expiration_date):
+                # If there's duplicate entries, just grab the first one and refund it (though in most cases we should only get one)
+                target_certs = CertificateItem.objects.filter(course_id=course_id, user_id=user, status='purchased', mode='verified')
+                try:
                     target_cert = target_certs[0]
-                    target_cert.status = 'refunded'
-                    target_cert.save()
+                except IndexError:
+                    log.exception("Matching CertificateItem not found while trying to refund.  User %s, Course %s", user, course_id)
+                    raise IndexError
+                target_cert.status = 'refunded'
+                target_cert.save()
 
-                    order_number = target_cert.order_id
+                order_number = target_cert.order_id
+                # send billing an email so they can handle refunding
+                subject = _("[Refund] User-Requested Refund")
+                message = "User {user} ({user_email}) has requested a refund on Order #{order_number}.".format(user=user, user_email=user.email, order_number=order_number)
+                to_email = [settings.PAYMENT_SUPPORT_EMAIL]
+                from_email = [settings.PAYMENT_SUPPORT_EMAIL]
+                try:
+                    send_mail(subject, message, from_email, to_email, fail_silently=False)
+                except (smtplib.SMTPException, BotoServerError):
+                    log.error('Failed sending email to billing request a refund for verified certiciate (User %s, Course %s)', user, course_id)
 
-                    # send billing an email so they can handle refunding
-                    subject = _("[Refund] User-Requested Refund")
-                    message = "User {user} ({user_email}) has requested a refund on Order #{order_number}.".format(user=user, user_email=user.email, order_number=order_number)
-                    to_email = [settings.PAYMENT_SUPPORT_EMAIL]
-                    from_email = [settings.PAYMENT_SUPPORT_EMAIL]
-                    try:
-                        send_mail(subject, message, from_email, to_email, fail_silently=False)
-                    except (smtplib.SMTPException, BotoServerError):
-                        log.error('Failed sending email to billing request a refund for verified certiciate (User %s, Course %s)', user, course_id)
+                return target_cert
 
-                    return target_cert
-
-        except IndexError:
-            log.exception("Matching CertificateItem not found while trying to refund.  User %s, Course %s", user, course_id)
-            raise IndexError
 
     @classmethod
     @transaction.commit_on_success
