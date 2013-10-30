@@ -910,7 +910,10 @@ def create_account(request, post_override=None):
                 dest_addr = settings.MITX_FEATURES['REROUTE_ACTIVATION_EMAIL']
                 message = ("Activation for %s (%s): %s\n" % (user, user.email, profile.name) +
                            '-' * 80 + '\n\n' + message)
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [dest_addr], fail_silently=False)
+                try:
+                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [dest_addr], fail_silently=False)
+                except (smtplib.SMTPException, BotoServerError):
+                    log.error('todo put real error message here')
             else:
                 _res = user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
         except:
