@@ -496,7 +496,9 @@ function (HTML5Video, Resizer) {
 
         duration = this.videoPlayer.duration();
 
-        if (!this.videoPlayer.initialSeekToStartTime) {
+        if (duration > 0 && !this.videoPlayer.initialSeekToStartTime) {
+            this.videoPlayer.initialSeekToStartTime = true;
+
             if (this.videoPlayer.startTime > duration) {
                 this.videoPlayer.startTime = 0;
             }
@@ -506,9 +508,15 @@ function (HTML5Video, Resizer) {
             ) {
                 this.videoPlayer.endTime = duration;
             }
-            this.videoPlayer.player.seekTo(this.videoPlayer.startTime, true);
 
-            this.videoPlayer.initialSeekToStartTime = true;
+            if (this.videoType === 'html5') {
+                this.videoPlayer.player.seekTo(this.videoPlayer.startTime);
+            } else {
+                this.videoPlayer.player.loadVideoById({
+                    videoId: this.youtubeId(),
+                    startSeconds: this.videoPlayer.startTime
+                });
+            }
         }
 
         this.trigger(
