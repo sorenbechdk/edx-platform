@@ -412,26 +412,33 @@ class CertificateItem(OrderItem):
         """
         from nose.tools import set_trace; set_trace()
         try:
-            course_id = kwargs['course_id']
-            user = kwargs['user']
+            mode = kwargs['instance'].mode
+            is_active = kwargs['instance'].is_active
+            course_id = kwargs['instance'].course_id
+            user = kwargs['instance'].user
 
-            # If there's duplicate entries, just grab the first one and refund it (though in most cases we should only get one)
-            target_certs = CertificateItem.objects.filter(course_id=course_id, user_id=user, status='purchased', mode='verified')
-            target_cert = target_certs[0]
-            target_cert.status = 'refunded'
-            target_cert.save()
+            # If a verified course is having is_active set to False, i.e. if a verified user is unenrolling....
+            if (mode == 'verified') and (is_active == False):
+                expiration_date = mode_for_course(course_id, 'verified')
+                # TODO if within bounds of the expiration date...
 
-            order_number = target_cert.order_id
+                # If there's duplicate entries, just grab the first one and refund it (though in most cases we should only get one)
+                target_certs = CertificateItem.objects.filter(course_id=course_id, user_id=user, status='purchased', mode='verified')
+                target_cert = target_certs[0]
+                target_cert.status = 'refunded'
+                target_cert.save()
 
-            # send billing an email so they can handle refunding
-            subject = _("[Refund] User-Requested Refund")
-            message = "User " + str(user) + "(" + str(user.email) + ") has requested a refund on Order #" + str(order_number) + "."
-            to_email = [settings.PAYMENT_SUPPORT_EMAIL]
-            from_email = [settings.PAYMENT_SUPPORT_EMAIL]
-            try:
-                send_mail(subject, message, from_email, to_email, fail_silently=False)
-            except (smtplib.SMTPException, BotoServerError):
-                log.error('Failed sending email to billing request a refund for verified certiciate (User %s, Course %s)', user, course_id)
+                order_number = target_cert.order_id
+
+                # send billing an email so they can handle refunding
+                subject = _("[Refund] User-Requested Refund")
+                message = "User {user} ({user_email}) has requested a refund on Order #{order_number}.".format(user=user, user_email=user.email, order_number=order_number)
+                to_email = [settings.PAYMENT_SUPPORT_EMAIL]
+                from_email = [settings.PAYMENT_SUPPORT_EMAIL]
+                try:
+                    send_mail(subject, message, from_email, to_email, fail_silently=False)
+                except (smtplib.SMTPException, BotoServerError):
+                    log.error('Failed sending email to billing request a refund for verified certiciate (User %s, Course %s)', user, course_id)
 
             return target_cert
 
