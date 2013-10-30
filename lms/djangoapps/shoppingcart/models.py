@@ -419,7 +419,7 @@ class CertificateItem(OrderItem):
 
             # If a verified course is having is_active set to False, i.e. if a verified user is unenrolling....
             if (mode == 'verified') and (is_active == False):
-                expiration_date = mode_for_course(course_id, 'verified')
+                expiration_date = CourseMode.mode_for_course(course_id, 'verified')
                 # TODO if within bounds of the expiration date...
 
                 # If there's duplicate entries, just grab the first one and refund it (though in most cases we should only get one)
