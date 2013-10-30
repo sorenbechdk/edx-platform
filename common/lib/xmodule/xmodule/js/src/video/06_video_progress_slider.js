@@ -108,16 +108,16 @@ function () {
         }
 
         // If the range spans the entire length of video, we don't do anything.
-        if (!this.config.startTime && !this.config.endTime) {
+        if (!this.videoPlayer.startTime && !this.videoPlayer.endTime) {
             return;
         }
 
-        start = this.config.startTime;
+        start = this.videoPlayer.startTime;
 
         // If end is set to null, then we set it to the end of the video. We
         // know that start is not a the beginning, therefore we must build a
         // range.
-        end = this.config.endTime || params.duration;
+        end = this.videoPlayer.endTime || params.duration;
 
         left = (100 * (start / params.duration)).toFixed(1);
         width = (100 * ((end - start) / params.duration)).toFixed(1);

@@ -79,7 +79,12 @@ function (HTML5Video, Resizer) {
 
         state.videoPlayer.currentTime = 0;
 
-        state.videoPlayer.initialSeekToStartTime = false;
+        state.videoPlayer.initialSeekToStartTime = true;
+
+        // The initial value of the variable `seekToStartTimeOldDuration`
+        // should always differ from the value returned by the duration
+        // function.
+        state.videoPlayer.seekToStartTimeOldDuration = 'void';
 
         state.videoPlayer.playerVars = {
             controls: 0,
@@ -492,12 +497,54 @@ function (HTML5Video, Resizer) {
     }
 
     function updatePlayTime(time) {
-        var duration;
+        var duration, speedFactor, durationChange;
 
         duration = this.videoPlayer.duration();
 
-        if (duration > 0 && !this.videoPlayer.initialSeekToStartTime) {
-            this.videoPlayer.initialSeekToStartTime = true;
+        if (
+            duration > 0 &&
+            (
+                this.videoPlayer.seekToStartTimeOldDuration !== duration ||
+                this.videoPlayer.initialSeekToStartTime
+            )
+        ) {
+
+
+            if (
+                this.videoPlayer.seekToStartTimeOldDuration !== duration &&
+                this.videoPlayer.initialSeekToStartTime === false
+            ) {
+                durationChange = true;
+            } else {
+                durationChange = false;
+            }
+
+            this.videoPlayer.initialSeekToStartTime = false;
+            this.videoPlayer.seekToStartTimeOldDuration = duration;
+
+            // We retrieve the original times. They could have been changed due
+            // to the fact of speed change (duration change). This happens when
+            // in YouTube Flash mode. There each speed is a different video,
+            // with a different length.
+            this.videoPlayer.startTime = this.config.startTime;
+            this.videoPlayer.endTime = this.config.endTime;
+
+            speedFactor = {
+                '0.5': 0.5,
+                '0.50': 0.5,
+                '0.75': 0.75,
+                '1.0': 1.0,
+                '1.00': 1.0,
+                '1.25': 1.25,
+                '1.5': 1.5,
+                '1.50': 1.5,
+                '2.0': 2.0,
+                '2.00': 2.0
+            };
+
+            // Change the start/end times based on the speed of the video.
+            this.videoPlayer.startTime /= speedFactor[this.speed];
+            this.videoPlayer.endTime /= speedFactor[this.speed];
 
             if (this.videoPlayer.startTime > duration) {
                 this.videoPlayer.startTime = 0;
@@ -509,27 +556,29 @@ function (HTML5Video, Resizer) {
                 this.videoPlayer.endTime = duration;
             }
 
-            if (this.videoType === 'html5') {
-                this.videoPlayer.player.seekTo(this.videoPlayer.startTime);
-            } else {
-                this.videoPlayer.player.loadVideoById({
-                    videoId: this.youtubeId(),
-                    startSeconds: this.videoPlayer.startTime
-                });
+            if (durationChange === false) {
+                if (this.videoType === 'html5') {
+                    this.videoPlayer.player.seekTo(this.videoPlayer.startTime);
+                } else {
+                    this.videoPlayer.player.loadVideoById({
+                        videoId: this.youtubeId(),
+                        startSeconds: this.videoPlayer.startTime
+                    });
+                }
             }
+
+            this.trigger(
+                'videoProgressSlider.updateStartEndTimeRegion',
+                {
+                    duration: duration
+                }
+            );
         }
 
         this.trigger(
             'videoProgressSlider.updatePlayTime',
             {
                 time: time,
-                duration: duration
-            }
-        );
-
-        this.trigger(
-            'videoProgressSlider.updateStartEndTimeRegion',
-            {
                 duration: duration
             }
         );
